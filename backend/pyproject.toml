@@ -1,0 +1,29 @@
+[project]
+name = "matchday-control-room"
+version = "0.1.0"
+description = "Multi-agent live match intelligence over synthetic football events"
+requires-python = ">=3.11"
+dependencies = [
+    "agent-framework>=1.22.0",
+    "azure-identity>=1.26.0",
+    "fastapi>=0.141",
+    "uvicorn[standard]>=0.54",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=9", "pytest-asyncio>=1.0", "httpx>=0.28"]
+
+[project.scripts]
+mcr-sim = "mcr.sim.__main__:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mcr*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

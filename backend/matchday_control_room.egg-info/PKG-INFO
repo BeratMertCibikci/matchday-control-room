@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: matchday-control-room
+Version: 0.1.0
+Summary: Multi-agent live match intelligence over synthetic football events
+Requires-Python: >=3.11
+Requires-Dist: agent-framework>=1.22.0
+Requires-Dist: azure-identity>=1.26.0
+Requires-Dist: fastapi>=0.141
+Requires-Dist: uvicorn[standard]>=0.54
+Provides-Extra: dev
+Requires-Dist: pytest>=9; extra == "dev"
+Requires-Dist: pytest-asyncio>=1.0; extra == "dev"
+Requires-Dist: httpx>=0.28; extra == "dev"

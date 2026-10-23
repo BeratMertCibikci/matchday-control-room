@@ -1,0 +1,9 @@
+# Azure Developer CLI: `azd up` provisions infra/main.bicep and deploys the container.
+name: matchday-control-room
+services:
+  web:
+    project: .
+    language: docker
+    host: containerapp
+    docker:
+      path: ./Dockerfile
