@@ -4,6 +4,7 @@ MCR_LLM selects the backend:
   offline       deterministic template client (default; no cloud needed)
   foundry       Microsoft Foundry project (FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_MODEL), Entra ID auth
   azure_openai  Azure OpenAI deployment (AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT, AZURE_OPENAI_API_KEY)
+  github_models GitHub Models (GITHUB_TOKEN with models:read, GITHUB_MODEL e.g. openai/gpt-4o-mini)
 """
 
 from __future__ import annotations
@@ -68,5 +69,13 @@ def build_chat_client():
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
             api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
+        )
+    if backend == "github_models":
+        from agent_framework.openai import OpenAIChatCompletionClient
+
+        return OpenAIChatCompletionClient(
+            model=os.getenv("GITHUB_MODEL", "openai/gpt-4o-mini"),
+            base_url=os.getenv("GITHUB_MODELS_ENDPOINT", "https://models.github.ai/inference"),
+            api_key=os.environ["GITHUB_TOKEN"],
         )
     return OfflineChatClient()

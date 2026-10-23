@@ -80,6 +80,8 @@ az login                              # DefaultAzureCredential
 
 Or Azure OpenAI: `MCR_LLM=azure_openai`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_KEY`.
 
+Or GitHub Models (free tier, no Azure subscription needed): `MCR_LLM=github_models`, `GITHUB_TOKEN` (a fine-grained token with the *Models: read* permission), optional `GITHUB_MODEL` (default `openai/gpt-4o-mini`).
+
 ### Deploy to Azure Container Apps
 
 ```bash
