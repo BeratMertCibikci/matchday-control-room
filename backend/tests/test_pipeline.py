@@ -122,3 +122,41 @@ async def test_offline_crew_end_to_end():
     ft = outs[-1]
     assert ft.recap and ft.recap["tr"]["headline"].startswith("Maç sonu")
     assert all(t["status"] != "fallback" for o in outs for t in o.trace)
+
+
+class CountingClient(BaseChatClient):
+    def __init__(self):
+        super().__init__()
+        self.calls = 0
+
+    async def _inner_get_response(self, *, messages, stream, options, **kwargs):
+        self.calls += 1
+        from mcr.agents.clients import render_offline
+        return ChatResponse(messages=Message("assistant", [render_offline(json.loads(messages[-1].text))]))
+
+
+async def test_validated_answers_are_cached_and_reused(tmp_path):
+    from mcr.agents.cache import ResponseCache
+
+    state, moments = run_match(5)
+    goal = next(m for m in moments if m.type == "goal")
+    client = CountingClient()
+    crew = BroadcastCrew(state, langs=("en", "tr"), client=client)
+    crew.cache = ResponseCache(tmp_path / "cache.json")
+    await crew.process(goal)
+    first = client.calls
+    crew2 = BroadcastCrew(state, langs=("en", "tr"), client=client)
+    crew2.cache = ResponseCache(tmp_path / "cache.json")
+    out = await crew2.process(goal)
+    assert first == 5 and client.calls == first
+    assert {t["status"] for t in out.trace if t["agent"] != "producer"} == {"cached"}
+
+
+async def test_rate_limiter_spaces_calls():
+    import time
+    from mcr.agents.cache import RateLimiter
+
+    lim = RateLimiter(rpm=600)  # 0.1 s apart
+    t0 = time.monotonic()
+    await asyncio.gather(*(lim.wait() for _ in range(4)))
+    assert time.monotonic() - t0 >= 0.29

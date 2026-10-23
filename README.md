@@ -80,7 +80,13 @@ az login                              # DefaultAzureCredential
 
 Or Azure OpenAI: `MCR_LLM=azure_openai`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_KEY`.
 
-Or GitHub Models (free tier, no Azure subscription needed): `MCR_LLM=github_models`, `GITHUB_TOKEN` (a fine-grained token with the *Models: read* permission), optional `GITHUB_MODEL` (default `openai/gpt-4o-mini`).
+Or run fully on-device with **Microsoft Foundry Local** (no cloud account; install it with `brew install microsoft/foundrylocal/foundrylocal` on macOS or `winget install Microsoft.FoundryLocal` on Windows): `MCR_LLM=foundry_local`, optional `FOUNDRY_LOCAL_MODEL` (default `phi-4-mini`). The first run downloads the model.
+
+Every validated model answer is cached in `backend/.cache/` (matches are seeded, so replays are instant; the trace shows `cached`), and `MCR_LLM_RPM` rate-limits calls for hosted tiers. To fill the cache before a demo:
+
+```bash
+MCR_LLM=foundry_local python -m mcr.agents.prewarm --seed 5
+```
 
 ### Deploy to Azure Container Apps
 

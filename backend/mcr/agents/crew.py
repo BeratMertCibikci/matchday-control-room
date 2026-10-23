@@ -22,6 +22,7 @@ from typing import Any, Callable
 from agent_framework import Agent
 
 from mcr.agents import templates
+from mcr.agents.cache import ResponseCache, default_cache, default_limiter
 from mcr.agents.clients import backend_name, build_chat_client, render_offline
 from mcr.agents.guard import FactGuard
 from mcr.agents.producer import Producer
@@ -101,9 +102,13 @@ class BroadcastCrew:
                  timeout_s: float | None = None):
         self.state = state
         self.langs = langs
-        self.timeout_s = timeout_s or float(os.getenv("MCR_AGENT_TIMEOUT_S", "12"))
+        # On-device models are slower than hosted ones, so they get a longer default timeout.
+        default_timeout = "45" if backend_name() == "foundry_local" else "12"
+        self.timeout_s = timeout_s or float(os.getenv("MCR_AGENT_TIMEOUT_S", default_timeout))
         self.client = client or build_chat_client()
         self.model_label = "offline-templates" if backend_name() == "offline" and client is None else backend_name()
+        self.cache = default_cache(backend_name()) if client is None else ResponseCache(None)
+        self.limiter = default_limiter(backend_name()) if client is None else default_limiter("offline")
         self.analyst = Agent(self.client, ANALYST_INSTRUCTIONS, name="analyst")
         self.narrator = Agent(self.client, NARRATOR_INSTRUCTIONS, name="narrator")
         self.persona = Agent(self.client, PERSONA_INSTRUCTIONS, name="persona")
@@ -118,14 +123,21 @@ class BroadcastCrew:
     async def _call(self, agent: Agent, payload: dict, moment: Moment, validate: Callable[[str], tuple[bool, Any, str]],
                     language: str | None = None) -> tuple[Any, TraceStep]:
         t0 = time.perf_counter()
+        key = ResponseCache.key(self.model_label, agent.name, payload)
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached, TraceStep(moment.id, agent.name, "cached", int((time.perf_counter() - t0) * 1000), 0,
+                                     "validated model answer reused", language)
         messages = json.dumps(payload, ensure_ascii=False)
         note = ""
         for attempt in (1, 2):
             try:
+                await self.limiter.wait()
                 resp = await asyncio.wait_for(agent.run(messages), timeout=self.timeout_s)
                 ok, value, feedback = validate(resp.text or "")
                 if ok:
                     status = "ok" if attempt == 1 else "retried"
+                    self.cache.put(key, value)
                     return value, TraceStep(moment.id, agent.name, status, int((time.perf_counter() - t0) * 1000),
                                             attempt, note, language)
                 note = feedback

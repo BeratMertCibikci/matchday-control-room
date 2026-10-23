@@ -7,3 +7,4 @@ __pycache__/
 .env
 .azure/
 data/*.jsonl
+backend/.cache/

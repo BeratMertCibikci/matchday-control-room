@@ -120,7 +120,7 @@ export function Feed({ crew, lang, persona, favorite }: { crew: CrewOutput[]; la
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  ok: 'ok', retried: 'warn', fallback: 'bad', show: 'ok', replace: 'warn', drop: 'muted', ticker: 'muted', skipped: 'muted',
+  ok: 'ok', cached: 'ok', retried: 'warn', fallback: 'bad', show: 'ok', replace: 'warn', drop: 'muted', ticker: 'muted', skipped: 'muted',
 }
 
 export function TracePanel({ crew, lang }: { crew: CrewOutput[]; lang: Lang }) {

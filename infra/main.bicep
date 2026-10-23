@@ -6,7 +6,7 @@ param environmentName string
 @description('Location for all resources')
 param location string = resourceGroup().location
 
-@description('LLM backend for the agent crew: offline | foundry | azure_openai | github_models')
+@description('LLM backend for the agent crew: offline | foundry | azure_openai')
 param llmBackend string = 'offline'
 
 @description('Microsoft Foundry project endpoint (required when llmBackend = foundry)')
