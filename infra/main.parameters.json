@@ -4,8 +4,10 @@
   "parameters": {
     "environmentName": { "value": "${AZURE_ENV_NAME}" },
     "location": { "value": "${AZURE_LOCATION}" },
+    "deployFoundry": { "value": "${MCR_DEPLOY_FOUNDRY=true}" },
     "llmBackend": { "value": "${MCR_LLM=offline}" },
     "foundryProjectEndpoint": { "value": "${FOUNDRY_PROJECT_ENDPOINT=}" },
-    "foundryModel": { "value": "${FOUNDRY_MODEL=gpt-4.1-mini}" }
+    "foundryModel": { "value": "${FOUNDRY_MODEL=gpt-4.1-mini}" },
+    "foundryModelCapacity": { "value": "${FOUNDRY_MODEL_CAPACITY=10}" }
   }
 }

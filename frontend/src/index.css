@@ -133,3 +133,22 @@ aside { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .step small { color: var(--muted); }
 .step.ok em { color: var(--ok); } .step.warn em { color: var(--warn); } .step.bad em { color: var(--bad); } .step.muted em { color: var(--muted); }
 .trace-note { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+.ask { display: flex; flex-direction: column; gap: 8px; }
+.ask-form { display: flex; gap: 8px; }
+.ask-form input {
+  flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
+}
+.ask-form input:focus { outline: none; border-color: var(--accent); }
+.ask-send { background: var(--accent); color: #111; font-weight: 700; border-color: var(--accent); }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ask-chips button { font-size: 12px; border-radius: 14px; padding: 3px 10px; color: var(--muted); }
+.ask-chips button:hover { color: var(--text); }
+.ask-thinking { font-size: 12px; color: var(--accent); animation: pulse 1.4s infinite; }
+.ask-answer { border-top: 1px solid var(--line); padding-top: 8px; }
+.ask-q { font-size: 12px; color: var(--muted); font-style: italic; }
+.ask-a { font-size: 14px; line-height: 1.45; margin: 3px 0 6px; }
+.ask-tools { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ask-tools-label { font-size: 11px; color: var(--muted); }
+.tool { font-size: 11px; font-family: ui-monospace, Menlo, monospace; background: rgba(245, 197, 24, 0.1); color: var(--accent); border: 1px solid rgba(245, 197, 24, 0.3); border-radius: 12px; padding: 2px 8px; }

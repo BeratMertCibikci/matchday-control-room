@@ -7,3 +7,4 @@ services:
     host: containerapp
     docker:
       path: ./Dockerfile
+      remoteBuild: true  # builds in Azure Container Registry, no local Docker needed

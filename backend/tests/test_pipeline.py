@@ -160,3 +160,82 @@ async def test_rate_limiter_spaces_calls():
     t0 = time.monotonic()
     await asyncio.gather(*(lim.wait() for _ in range(4)))
     assert time.monotonic() - t0 >= 0.29
+
+
+# ---------------------------------------------------------------- ask the booth
+from agent_framework import Content, FunctionInvocationLayer  # noqa: E402
+
+from mcr.agents.booth import BoothAgent  # noqa: E402
+
+
+async def test_booth_answers_from_tools_offline():
+    state, moments = run_match(5)
+    booth = BoothAgent(state, moments, native=False)
+    a = await booth.ask("Riverside neden bu kadar baskı yapıyor?", "tr")
+    assert a.status == "ok" and a.mode == "planned"
+    assert [t["name"] for t in a.tools] == ["team_stats", "key_moments"]
+    assert a.tools[0]["args"] == {"team": "RVA"}
+    assert "Riverside" in a.answer and FactGuard().check(a.answer, {"t": [t["result"] for t in a.tools]}).ok
+
+
+class ToolCallingClient(FunctionInvocationLayer, BaseChatClient):
+    """Behaves like a hosted model with function calling: asks for team_stats, then answers from its result."""
+
+    async def _inner_get_response(self, *, messages, stream, options, **kwargs):
+        results = [c for m in messages for c in m.contents if c.type == "function_result"]
+        if not results:
+            call = Content.from_function_call(call_id="c1", name="team_stats", arguments={"team": "Riverside"})
+            return ChatResponse(messages=Message("assistant", [call]))
+        data = json.loads(results[-1].result) if isinstance(results[-1].result, str) else results[-1].result
+        if isinstance(data, list):  # some versions wrap tool output in content items
+            data = json.loads(data[0].text)
+        return ChatResponse(messages=Message("assistant", [
+            f"Riverside are pressing {data['pressures_per_min_now']} times a minute."]))
+
+
+async def test_booth_native_tool_calling():
+    state, moments = run_match(5)
+    booth = BoothAgent(state, moments, client=ToolCallingClient(), native=True)
+    a = await booth.ask("Why is Riverside pressing?", "en")
+    assert a.mode == "native" and a.status == "ok", a.note
+    assert a.tools and a.tools[0]["name"] == "team_stats"
+    assert str(a.tools[0]["result"]["pressures_per_min_now"]) in a.answer
+
+
+class InventingClient(BaseChatClient):
+    async def _inner_get_response(self, *, messages, stream, options, **kwargs):
+        return ChatResponse(messages=Message("assistant", ["Riverside have made 347 pressures, a league record."]))
+
+
+async def test_booth_rejects_invented_numbers():
+    state, moments = run_match(5)
+    a = await BoothAgent(state, moments, client=InventingClient(), native=False).ask("Who is pressing?", "en")
+    assert a.status == "fallback" and "347" not in a.answer and "347" in a.note
+
+
+def test_eval_switch_and_guard_probe():
+    from mcr.eval.__main__ import eval_guard, eval_switch
+
+    sw = eval_switch(range(1, 6))
+    assert sw["detected"] == 5 and sw["median_delay_min"] <= 6
+    g = eval_guard(5)
+    assert g["clean_pass_pct"] == 100.0 and g["invented_caught_pct"] >= 85 and g["nudged_caught_pct"] >= 85
+
+
+def test_websocket_booth_question_and_bad_control_messages():
+    from fastapi.testclient import TestClient
+
+    from mcr.api.app import app
+
+    with TestClient(app) as client, client.websocket_connect("/ws/match?seed=5&speed=240&langs=en") as ws:
+        assert json.loads(ws.receive_text())["type"] == "meta"
+        ws.send_text("not json")
+        ws.send_text(json.dumps({"type": "speed", "value": "fast"}))
+        ws.send_text(json.dumps({"type": "pause"}))
+        ws.send_text(json.dumps({"type": "ask", "question": "Who is on top right now?", "lang": "en", "id": "q1"}))
+        for _ in range(500):
+            msg = json.loads(ws.receive_text())
+            if msg["type"] == "answer":
+                break
+        assert msg["data"]["id"] == "q1" and msg["data"]["status"] == "ok"
+        assert [t["name"] for t in msg["data"]["tools"]][0] == "match_overview"

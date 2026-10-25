@@ -25,12 +25,14 @@ from agent_framework import Agent
 from mcr.agents import templates
 from mcr.agents.cache import ResponseCache, call_slots, default_cache, default_limiter
 
-log = logging.getLogger(__name__)
 from mcr.agents.clients import backend_name, build_chat_client, render_offline
 from mcr.agents.guard import FactGuard
 from mcr.agents.producer import Producer
 from mcr.stats.engine import MatchState
 from mcr.stats.moments import Moment
+from mcr.telemetry import tracer
+
+log = logging.getLogger(__name__)
 
 LANG_NAMES = {"en": "English", "tr": "Turkish", "es": "Spanish", "fr": "French", "ar": "Arabic", "pt": "Portuguese"}
 
@@ -126,6 +128,16 @@ class BroadcastCrew:
     # ------------------------------------------------------------------ core call
     async def _call(self, agent: Agent, payload: dict, moment: Moment, validate: Callable[[str], tuple[bool, Any, str]],
                     language: str | None = None) -> tuple[Any, TraceStep]:
+        with tracer.start_as_current_span(f"mcr.agent {agent.name}") as span:
+            value, step = await self._call_inner(agent, payload, moment, validate, language)
+            span.set_attributes({"mcr.agent": agent.name, "mcr.language": language or "", "mcr.status": step.status,
+                                 "mcr.attempts": step.attempts, "mcr.latency_ms": step.latency_ms,
+                                 "mcr.note": step.note[:200]})
+            return value, step
+
+    async def _call_inner(self, agent: Agent, payload: dict, moment: Moment,
+                          validate: Callable[[str], tuple[bool, Any, str]],
+                          language: str | None = None) -> tuple[Any, TraceStep]:
         t0 = time.perf_counter()
         key = ResponseCache.key(self.model_label, agent.name, payload)
         cached = self.cache.get(key)
@@ -203,6 +215,14 @@ class BroadcastCrew:
 
     # ------------------------------------------------------------------ public
     async def process(self, m: Moment) -> CrewOutput:
+        with tracer.start_as_current_span(f"mcr.moment {m.type}") as span:
+            span.set_attributes({"mcr.moment.type": m.type, "mcr.moment.minute": m.minute,
+                                 "mcr.moment.importance": m.importance, "mcr.moment.team": m.team or ""})
+            out = await self._process(m)
+            span.set_attribute("mcr.producer.action", out.decision["action"])
+            return out
+
+    async def _process(self, m: Moment) -> CrewOutput:
         ctx = self._context()
         extra = [ctx["minute"], ctx["possession"], m.minute]
         base = {"moment_type": m.type, "facts": m.facts, "evidence": m.evidence, "context": ctx,

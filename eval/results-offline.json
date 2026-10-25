@@ -1,0 +1,306 @@
+{
+  "backend": "offline",
+  "seed": 5,
+  "switch": {
+    "seeds": 20,
+    "detected": 20,
+    "median_delay_min": 4.0,
+    "rows": [
+      {
+        "seed": 1,
+        "detected": true,
+        "minute": 64,
+        "delay_min": 6,
+        "ratio": 4.2
+      },
+      {
+        "seed": 2,
+        "detected": true,
+        "minute": 61,
+        "delay_min": 3,
+        "ratio": 5.1
+      },
+      {
+        "seed": 3,
+        "detected": true,
+        "minute": 73,
+        "delay_min": 15,
+        "ratio": 4.0
+      },
+      {
+        "seed": 4,
+        "detected": true,
+        "minute": 65,
+        "delay_min": 7,
+        "ratio": 3.9
+      },
+      {
+        "seed": 5,
+        "detected": true,
+        "minute": 58,
+        "delay_min": 0,
+        "ratio": 3.3
+      },
+      {
+        "seed": 6,
+        "detected": true,
+        "minute": 61,
+        "delay_min": 3,
+        "ratio": 4.0
+      },
+      {
+        "seed": 7,
+        "detected": true,
+        "minute": 61,
+        "delay_min": 3,
+        "ratio": 6.1
+      },
+      {
+        "seed": 8,
+        "detected": true,
+        "minute": 60,
+        "delay_min": 2,
+        "ratio": 3.5
+      },
+      {
+        "seed": 9,
+        "detected": true,
+        "minute": 65,
+        "delay_min": 7,
+        "ratio": 6.5
+      },
+      {
+        "seed": 10,
+        "detected": true,
+        "minute": 62,
+        "delay_min": 4,
+        "ratio": 6.1
+      },
+      {
+        "seed": 11,
+        "detected": true,
+        "minute": 67,
+        "delay_min": 9,
+        "ratio": 3.9
+      },
+      {
+        "seed": 12,
+        "detected": true,
+        "minute": 61,
+        "delay_min": 3,
+        "ratio": 3.4
+      },
+      {
+        "seed": 13,
+        "detected": true,
+        "minute": 63,
+        "delay_min": 5,
+        "ratio": 3.3
+      },
+      {
+        "seed": 14,
+        "detected": true,
+        "minute": 68,
+        "delay_min": 10,
+        "ratio": 2.5
+      },
+      {
+        "seed": 15,
+        "detected": true,
+        "minute": 61,
+        "delay_min": 3,
+        "ratio": 4.7
+      },
+      {
+        "seed": 16,
+        "detected": true,
+        "minute": 65,
+        "delay_min": 7,
+        "ratio": 3.1
+      },
+      {
+        "seed": 17,
+        "detected": true,
+        "minute": 62,
+        "delay_min": 4,
+        "ratio": 4.4
+      },
+      {
+        "seed": 18,
+        "detected": true,
+        "minute": 62,
+        "delay_min": 4,
+        "ratio": 3.2
+      },
+      {
+        "seed": 19,
+        "detected": true,
+        "minute": 64,
+        "delay_min": 6,
+        "ratio": 4.2
+      },
+      {
+        "seed": 20,
+        "detected": true,
+        "minute": 62,
+        "delay_min": 4,
+        "ratio": 3.4
+      }
+    ]
+  },
+  "guard": {
+    "lines": 96,
+    "clean_pass_pct": 100.0,
+    "invented_caught_pct": 89.6,
+    "invented_collisions": 10,
+    "nudged_lines": 56,
+    "nudged_caught_pct": 92.9,
+    "nudged_misses": [
+      "Kofi Annan-Ward found Dario Vance with a pass rated 10.99 out of 10 for difficulty: 23 m, 11 m forward, under pressure.",
+      "Kofi Annan-Ward, Dario Vance'a zorluk puanı 10 üzerinden 10,99 olan bir pas attı: 23 m, 11 m ileri, baskı altında.",
+      "Riverside Athletic has lifted its press to 3.45 pressures per minute, 3.5x its match average of 0.75. It has forced 6 turnovers in five minutes, a tactical change rather than a random spell."
+    ]
+  },
+  "crew": {
+    "moments": 26,
+    "calls": 124,
+    "model_answer_pct": 100.0,
+    "guard_rejections": 0,
+    "wall_s": 0.4,
+    "agents": {
+      "analyst": {
+        "calls": 24,
+        "ok_pct": 100.0,
+        "retried_pct": 0.0,
+        "fallback_pct": 0.0,
+        "p50_ms": 0,
+        "p95_ms": 0
+      },
+      "narrator": {
+        "calls": 48,
+        "ok_pct": 100.0,
+        "retried_pct": 0.0,
+        "fallback_pct": 0.0,
+        "p50_ms": 0,
+        "p95_ms": 0
+      },
+      "persona": {
+        "calls": 48,
+        "ok_pct": 100.0,
+        "retried_pct": 0.0,
+        "fallback_pct": 0.0,
+        "p50_ms": 0,
+        "p95_ms": 0
+      },
+      "recap": {
+        "calls": 4,
+        "ok_pct": 100.0,
+        "retried_pct": 0.0,
+        "fallback_pct": 0.0,
+        "p50_ms": 1,
+        "p95_ms": 1
+      }
+    }
+  },
+  "booth": {
+    "mode": "planned",
+    "questions": 8,
+    "model_answer_pct": 100.0,
+    "tool_match_pct": 100.0,
+    "p50_ms": 1,
+    "rows": [
+      {
+        "question": "Why is Riverside pressing so much?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "key_moments",
+          "team_stats"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "Riverside Athletic: 1.86 xG from 9 shots, 81.3% passing, pressing 2.2 times a minute now against a match average of 1.2. In minute 71 Riverside Athletic pressed at 3.5x their normal rate."
+      },
+      {
+        "question": "Riverside neden bu kadar baskı yapıyor?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "key_moments",
+          "team_stats"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "Riverside Athletic: 1,86 xG, 9 şut, %81,3 pas isabeti; şu an dakikada 2,2 baskı (maç ortalaması 1,2). 71. dakikada Riverside Athletic baskıyı normalin 3,5 katına çıkardı."
+      },
+      {
+        "question": "Who is on top right now?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "key_moments",
+          "match_overview"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "It's NBR 1-2 RVA in minute 96. Momentum sits with Riverside Athletic (58) and the game reads as 'balanced' (chaos index 57.6). Latest key moment: momentum shift in minute 74."
+      },
+      {
+        "question": "Şu an hangi takım üstün?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "key_moments",
+          "match_overview"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "96. dakikada skor NBR 1-2 RVA. Momentum 58 ile Riverside Athletic tarafında, oyun 'balanced' modunda (kaos endeksi 57,6). Son kritik an: 74. dakikada momentum shift."
+      },
+      {
+        "question": "Who has run the most?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "top_players"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "Top by distance (km): Noah Lindqvist (10.91), Kofi Annan-Ward (10.9), Jonah Pell (10.8)."
+      },
+      {
+        "question": "How is Dario Vance playing?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "player_stats"
+        ],
+        "tool_match": true,
+        "latency_ms": 0,
+        "answer": "Dario Vance: 1 goals, 2.92 xG, 3 key passes, 10.74 km covered, top speed 33.8 km/h."
+      },
+      {
+        "question": "Son golü anlat",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "key_moments"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "Son gol 81. dakikada Kai Mensah (0,65 xG), skor NBR 1-2 RVA."
+      },
+      {
+        "question": "How many chances has Northbridge created?",
+        "status": "ok",
+        "mode": "planned",
+        "tools": [
+          "team_stats"
+        ],
+        "tool_match": true,
+        "latency_ms": 1,
+        "answer": "Northbridge FC: 3.02 xG from 22 shots, 78.2% passing, pressing 0.4 times a minute now against a match average of 1.08."
+      }
+    ]
+  }
+}

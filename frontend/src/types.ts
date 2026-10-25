@@ -61,3 +61,9 @@ export interface CrewOutput {
   overlay: Overlay | null; trace: TraceStep[]
   recap: Record<Lang, Recap> | null
 }
+
+export interface ToolCall { name: string; args: Record<string, unknown>; result: unknown }
+export interface BoothAnswer {
+  id: string; question: string; language: Lang; answer: string
+  mode: 'native' | 'planned'; status: string; latency_ms: number; tools: ToolCall[]; note: string
+}

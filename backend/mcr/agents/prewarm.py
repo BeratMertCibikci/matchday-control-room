@@ -36,6 +36,9 @@ async def prewarm(seed: int, langs: tuple[str, ...]) -> Counter:
 
 
 def main() -> None:
+    from mcr.telemetry import setup
+
+    setup()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--seed", type=int, default=5)
     ap.add_argument("--langs", default="en,tr")

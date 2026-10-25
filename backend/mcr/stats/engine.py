@@ -232,6 +232,10 @@ class MatchState:
             for tid in (self.home_id, self.away_id):
                 self.minute_pressures[tid].append(self._pressure_this_minute[tid])
                 self._pressure_this_minute[tid] = 0
+        if ev.period != self.period:
+            # The second-half clock restarts at 45:00 while first-half stoppage time ran past it,
+            # so rolling rates start fresh instead of counting first-half events twice.
+            self.window = Window()
         self.clock, self.minute, self.period = ev.t, ev.minute, ev.period
         self.window.trim(self.clock)
         if ev.frame:

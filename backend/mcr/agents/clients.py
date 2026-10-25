@@ -14,12 +14,12 @@ import json
 import os
 from typing import Any
 
-from agent_framework import BaseChatClient, ChatResponse, Message
+from agent_framework import BaseChatClient, ChatResponse, FunctionInvocationLayer, Message
 
 from mcr.agents import templates
 
 
-class OfflineChatClient(BaseChatClient):
+class OfflineChatClient(FunctionInvocationLayer, BaseChatClient):
     """Answers crew prompts with grounded template text. Keeps the Agent Framework pipeline intact
     so swapping to a real model is a configuration change, not a code change."""
 

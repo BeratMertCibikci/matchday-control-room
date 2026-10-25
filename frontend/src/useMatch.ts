@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CrewOutput, Frame, MatchEvent, Meta, Moment, Snapshot } from './types'
+import type { BoothAnswer, CrewOutput, Frame, Lang, MatchEvent, Meta, Moment, Snapshot } from './types'
 
 export interface MatchFeed {
   connected: boolean
@@ -12,6 +12,9 @@ export interface MatchFeed {
   snapshot: Snapshot | null
   moments: Moment[]
   crew: CrewOutput[]
+  answers: BoothAnswer[]
+  pending: string[]
+  ask: (question: string, lang: Lang) => void
   setSpeed: (v: number) => void
   pause: () => void
   resume: () => void
@@ -36,10 +39,12 @@ export function useMatch(seed: number, initialSpeed: number): MatchFeed {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
   const [moments, setMoments] = useState<Moment[]>([])
   const [crew, setCrew] = useState<CrewOutput[]>([])
+  const [answers, setAnswers] = useState<BoothAnswer[]>([])
+  const [pending, setPending] = useState<string[]>([])
   const ws = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    setEnded(false); setEvents([]); setMoments([]); setCrew([]); setSnapshot(null); setClock(0)
+    setEnded(false); setEvents([]); setMoments([]); setCrew([]); setAnswers([]); setPending([]); setSnapshot(null); setClock(0)
     const sock = new WebSocket(wsUrl(seed, initialSpeed))
     ws.current = sock
     sock.onopen = () => setConnected(true)
@@ -59,6 +64,10 @@ export function useMatch(seed: number, initialSpeed: number): MatchFeed {
         case 'state': setSnapshot(data); break
         case 'moment': setMoments((prev) => [...prev, data]); break
         case 'crew': setCrew((prev) => [...prev, data]); break
+        case 'answer':
+          setAnswers((prev) => [...prev, data])
+          setPending((prev) => prev.filter((id) => id !== data.id))
+          break
         case 'end': setEnded(true); break
       }
     }
@@ -72,7 +81,12 @@ export function useMatch(seed: number, initialSpeed: number): MatchFeed {
   }, [])
 
   return {
-    connected, ended, meta, frame, clock, lastEvent, events, snapshot, moments, crew,
+    connected, ended, meta, frame, clock, lastEvent, events, snapshot, moments, crew, answers, pending,
+    ask: (question, lang) => {
+      const id = `q${Date.now()}`
+      setPending((prev) => [...prev, id])
+      send({ type: 'ask', question, lang, id })
+    },
     setSpeed: (v) => send({ type: 'speed', value: v }),
     pause: () => send({ type: 'pause' }),
     resume: () => send({ type: 'resume' }),

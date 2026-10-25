@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AskBooth } from './components/AskBooth'
 import { Pitch } from './components/Pitch'
 import { activeOverlay, OverlayCard } from './components/OverlayLayer'
 import { Feed, personaFor, PlayerPanel, Scorebug, StatsPanel, TracePanel } from './components/Panels'
@@ -120,6 +121,8 @@ export default function App() {
               <OverlayCard c={overlay} meta={meta} lang={lang} persona="casual" label={t('casual', lang)} />
             </div>
           )}
+          <div className="sub-title">{t('askTitle', lang)}</div>
+          <AskBooth answers={feed.answers} pending={feed.pending} lang={lang} onAsk={feed.ask} />
           <div className="sub-title">{t('trace', lang)}</div>
           <TracePanel crew={crew} lang={lang} />
         </section>

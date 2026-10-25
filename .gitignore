@@ -8,3 +8,4 @@ __pycache__/
 .azure/
 data/*.jsonl
 backend/.cache/
+*.egg-info/

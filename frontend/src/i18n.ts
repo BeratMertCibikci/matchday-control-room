@@ -42,6 +42,11 @@ const STRINGS = {
   fullTime: { en: 'Full-time', tr: 'Maç sonu' },
   halfTime: { en: 'Half-time', tr: 'Devre arası' },
   voice: { en: 'Voice', tr: 'Ses' },
+  askTitle: { en: 'Ask the booth', tr: 'Stüdyoya sor' },
+  askPlaceholder: { en: 'Ask about the match…', tr: 'Maçla ilgili bir şey sor…' },
+  askSend: { en: 'Ask', tr: 'Sor' },
+  askThinking: { en: 'The booth is checking the data…', tr: 'Stüdyo veriye bakıyor…' },
+  toolsUsed: { en: 'Data checked', tr: 'Bakılan veri' },
 } as const
 
 const MOMENT_LABELS: Record<string, Record<Lang, string>> = {
@@ -66,4 +71,9 @@ export type StringKey = keyof typeof STRINGS
 
 export function t(key: StringKey, lang: Lang): string {
   return STRINGS[key][lang]
+}
+
+export const ASK_SUGGESTIONS: Record<Lang, string[]> = {
+  en: ['Why is Riverside pressing so much?', 'Who is on top right now?', 'Who has run the most?', 'Tell me about the last goal'],
+  tr: ['Riverside neden bu kadar baskı yapıyor?', 'Şu an hangi takım üstün?', 'Kim en çok koştu?', 'Son golü anlat'],
 }

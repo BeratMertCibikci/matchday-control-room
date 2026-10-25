@@ -32,15 +32,51 @@ flowchart LR
   G3 --> PR
   DET -->|half / full time| RE[Recap x lang] --> G4{FactGuard} --> PR
   PR -->|overlay + decision + trace| UI[Web app]
+  UI -->|viewer question| BO[Booth]
+  BO -->|tool calls| TOOLS[(MatchState tools)]
+  BO --> G5{FactGuard} -->|answer + tools used| UI
 ```
 
-* **Analyst, Narrator, Persona and Recap** are Microsoft Agent Framework `Agent`s sharing one chat client (Microsoft Foundry, Azure OpenAI, or the offline client).
+* **Analyst, Narrator, Persona, Recap and Booth** are Microsoft Agent Framework `Agent`s sharing one chat client (Microsoft Foundry, Azure OpenAI, Foundry Local, or the offline client).
 * **FactGuard** checks every generated line: a number that is not in the moment's facts gets the text rejected and retried once with corrective feedback.
 * **Recovery**: every call has a timeout, one guarded retry and a deterministic, grounded fallback, so a slow or hallucinating model degrades the broadcast instead of breaking it. The test suite injects a hallucinating, timing-out client to prove this (`tests/test_pipeline.py`).
 * **Producer** is a policy agent: one primary overlay slot plus a ticker for player tags, with priority and cooldown rules. Each decision carries a human-readable reason.
 * **Shared state** is the deterministic `MatchState`. Agents never compute numbers, they only narrate the ones the stats engine produced.
 * **Agent trace**: every step (agent, language, status, latency, retry/fallback reason) is streamed to the UI.
 * Minor moments (sprints, shot speeds, milestones) skip the LLM entirely, which keeps cost and latency down.
+
+## Ask the booth
+
+Viewers can type a question ("Why is Riverside pressing so much?", "Kim en çok koştu?") or tap a suggestion. The **Booth** agent does not see the stats: it has to fetch them through five read-only tools over the shared `MatchState` (`match_overview`, `team_stats`, `player_stats`, `key_moments`, `top_players`), and FactGuard checks the answer against exactly what those tools returned. The UI shows the answer with the tool calls behind it.
+
+* **native** mode: the model chooses the tools (Agent Framework function calling). Default for hosted models.
+* **planned** mode: a deterministic planner picks the tools from the question and the model writes the answer from their results. Default for on-device models, which are unreliable at tool calls (`MCR_BOOTH_TOOLS=native` overrides).
+* A native answer that calls no tool, or quotes an unknown number, is retried in planned mode, then falls back to a templated, grounded answer.
+
+## Evaluation
+
+```bash
+cd backend
+python -m mcr.eval                                   # writes eval/results-offline.md and .json
+MCR_LLM=foundry_local python -m mcr.eval --moments 10
+```
+
+It measures four things: whether the analytics find the hidden tactical switch (20 seeds), how well FactGuard separates grounded lines from lines with an invented or nudged number, how each agent behaves against the configured model with the cache off (ok / retried / fallback, p50 and p95 latency), and whether the Booth picks the right tools for a fixed question set. Current offline results: [eval/results-offline.md](eval/results-offline.md).
+
+## Observability
+
+Every moment, agent call, booth question and tool call is an OpenTelemetry span, with Agent Framework's own GenAI spans (`invoke_agent`, `chat`, `execute_tool`) nested underneath, so a trace shows the whole hand-off chain. Off by default:
+
+```bash
+# local: Aspire Dashboard on http://localhost:18888
+docker run --rm -d -p 18888:18888 -p 4318:18890 -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true mcr.microsoft.com/dotnet/aspire-dashboard:latest
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+
+# or print spans to the console
+export MCR_OTEL=1
+```
+
+On Azure, `infra/main.bicep` provisions Application Insights and the app sends traces there automatically.
 
 ## Hidden tactical switch
 
@@ -94,16 +130,22 @@ Every validated model answer is cached in `backend/.cache/` (matches are seeded,
 MCR_LLM=foundry_local python -m mcr.agents.prewarm --seed 5
 ```
 
-### Deploy to Azure Container Apps
+### Deploy to Azure
 
 ```bash
 azd auth login
-azd env set MCR_LLM foundry               # optional
-azd env set FOUNDRY_PROJECT_ENDPOINT ...  # optional
+azd env new mcr --location eastus2
 azd up
 ```
 
-`infra/main.bicep` provisions Log Analytics, a container registry, a user-assigned managed identity, a Container Apps environment and the app (scale to zero, HTTP autoscaling). When using Foundry, grant the app identity the *Azure AI User* role on the Foundry project.
+`infra/main.bicep` provisions everything the app needs, keyless:
+
+* a **Microsoft Foundry** resource with a project and a `gpt-4.1-mini` deployment (GlobalStandard, `foundryModelCapacity` thousand tokens per minute),
+* a user-assigned managed identity with *Azure AI User* on the Foundry resource and *AcrPull* on the registry,
+* Log Analytics and **Application Insights** (agent traces),
+* a container registry and a **Container Apps** environment running the app (scale to zero, HTTP autoscaling, WebSockets).
+
+The app starts with `MCR_LLM=foundry` pointed at the new project. To skip the model and deploy offline: `azd env set MCR_DEPLOY_FOUNDRY false`. Pick a region where the model is available for GlobalStandard (for example `eastus2` or `swedencentral`).
 
 ## Synthetic data
 
@@ -126,11 +168,14 @@ cd backend && pytest
 backend/
   mcr/sim/        synthetic match engine, fictional squads, CLI
   mcr/stats/      match state, xG, pass difficulty, momentum, control vs chaos, moment detection
-  mcr/agents/     crew (Agent Framework agents), FactGuard, Producer, templates, chat clients
+  mcr/agents/     crew and booth (Agent Framework agents), FactGuard, Producer, templates, chat clients
+  mcr/eval/       evaluation harness (python -m mcr.eval)
+  mcr/telemetry.py OpenTelemetry setup (OTLP, Azure Monitor, console)
   mcr/api/        FastAPI app: WebSocket stream + dataset export
   tests/
 frontend/         React + Vite broadcast UI
-infra/            Bicep for Azure Container Apps (azd)
+infra/            Bicep for Foundry + Container Apps + Application Insights (azd)
+eval/             evaluation results
 ```
 
 ## License
