@@ -91,13 +91,20 @@ def build_chat_client():
 
 
 def resolve_local_model(base_url: str, alias: str) -> str:
-    """Maps an alias like phi-4-mini to the full model id the local server reports."""
+    """Maps an alias like phi-4-mini to the full model id the local server has loaded."""
     import httpx
 
-    try:
-        ids = [m["id"] for m in httpx.get(f"{base_url}/models", timeout=10).json().get("data", [])]
-    except (httpx.HTTPError, ValueError):
-        return alias
+    root = base_url.removesuffix("/v1")
+    ids: list[str] = []
+    for url in (f"{root}/openai/loadedmodels", f"{base_url}/models"):
+        try:
+            body = httpx.get(url, timeout=10).json()
+        except (httpx.HTTPError, ValueError):
+            continue
+        items = body.get("data", []) if isinstance(body, dict) else body
+        ids = [i if isinstance(i, str) else i.get("id") or i.get("name", "") for i in items or []]
+        if ids:
+            break
     if alias in ids:
         return alias
     key = alias.lower()

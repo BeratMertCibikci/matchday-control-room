@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -22,7 +23,9 @@ from typing import Any, Callable
 from agent_framework import Agent
 
 from mcr.agents import templates
-from mcr.agents.cache import ResponseCache, default_cache, default_limiter
+from mcr.agents.cache import ResponseCache, call_slots, default_cache, default_limiter
+
+log = logging.getLogger(__name__)
 from mcr.agents.clients import backend_name, build_chat_client, render_offline
 from mcr.agents.guard import FactGuard
 from mcr.agents.producer import Producer
@@ -109,6 +112,7 @@ class BroadcastCrew:
         self.model_label = "offline-templates" if backend_name() == "offline" and client is None else backend_name()
         self.cache = default_cache(backend_name()) if client is None else ResponseCache(None)
         self.limiter = default_limiter(backend_name()) if client is None else default_limiter("offline")
+        self.slots = call_slots(backend_name()) if client is None else None
         self.analyst = Agent(self.client, ANALYST_INSTRUCTIONS, name="analyst")
         self.narrator = Agent(self.client, NARRATOR_INSTRUCTIONS, name="narrator")
         self.persona = Agent(self.client, PERSONA_INSTRUCTIONS, name="persona")
@@ -133,7 +137,11 @@ class BroadcastCrew:
         for attempt in (1, 2):
             try:
                 await self.limiter.wait()
-                resp = await asyncio.wait_for(agent.run(messages), timeout=self.timeout_s)
+                if self.slots is None:
+                    resp = await asyncio.wait_for(agent.run(messages), timeout=self.timeout_s)
+                else:
+                    async with self.slots:  # queueing time does not count against the timeout
+                        resp = await asyncio.wait_for(agent.run(messages), timeout=self.timeout_s)
                 ok, value, feedback = validate(resp.text or "")
                 if ok:
                     status = "ok" if attempt == 1 else "retried"
@@ -146,7 +154,11 @@ class BroadcastCrew:
             except asyncio.TimeoutError:
                 note = f"timeout after {self.timeout_s}s"
             except Exception as exc:  # model/network errors must not stop the broadcast
-                note = f"{type(exc).__name__}: {str(exc)[:120]}"
+                root = exc
+                while root.__cause__ is not None:  # surface the model server's own error, not the wrapper
+                    root = root.__cause__
+                note = f"{type(root).__name__}: {str(root)[:200]}"
+                log.warning("%s call failed (attempt %d): %s", agent.name, attempt, note)
         fallback = render_offline(payload)
         _, value, _ = validate(fallback)
         if value is None:  # templates are grounded by construction; never leave the slot empty

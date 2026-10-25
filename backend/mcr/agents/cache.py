@@ -73,3 +73,17 @@ def default_limiter(backend: str) -> RateLimiter:
     if rpm:
         return RateLimiter(float(rpm))
     return RateLimiter(None)
+
+
+_slots: dict[str, asyncio.Semaphore] = {}
+
+
+def call_slots(backend: str) -> asyncio.Semaphore | None:
+    """Process-wide cap on concurrent model calls. On-device models (Foundry Local) crash under parallel
+    requests, so they default to one call at a time; MCR_LLM_CONCURRENCY overrides."""
+    n = int(os.getenv("MCR_LLM_CONCURRENCY", "1" if backend == "foundry_local" else "0"))
+    if n <= 0:
+        return None
+    if backend not in _slots:
+        _slots[backend] = asyncio.Semaphore(n)
+    return _slots[backend]
