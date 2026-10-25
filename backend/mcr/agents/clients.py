@@ -4,7 +4,8 @@ MCR_LLM selects the backend:
   offline       deterministic template client (default; no cloud needed)
   foundry       Microsoft Foundry project (FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_MODEL), Entra ID auth
   azure_openai  Azure OpenAI deployment (AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT, AZURE_OPENAI_API_KEY)
-  foundry_local Microsoft Foundry Local, on-device models (FOUNDRY_LOCAL_MODEL, default phi-4-mini)
+  foundry_local Microsoft Foundry Local, on-device models (FOUNDRY_LOCAL_MODEL, default phi-4-mini);
+                set FOUNDRY_LOCAL_ENDPOINT (from `foundry server status`) to use an already running server
 """
 
 from __future__ import annotations
@@ -71,8 +72,33 @@ def build_chat_client():
             api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
         )
     if backend == "foundry_local":
+        endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT")
+        if endpoint:
+            from agent_framework.openai import OpenAIChatCompletionClient
+
+            # Talks to the server's OpenAI-compatible API directly, bypassing the SDK's service management.
+            base_url = endpoint.rstrip("/").removesuffix("/v1") + "/v1"
+            return OpenAIChatCompletionClient(
+                model=resolve_local_model(base_url, os.getenv("FOUNDRY_LOCAL_MODEL", "phi-4-mini")),
+                base_url=base_url,
+                api_key="foundry-local",
+            )
         from agent_framework.foundry import FoundryLocalClient
 
         # Starts the local Foundry service if needed and downloads/loads the model on first use.
         return FoundryLocalClient(model=os.getenv("FOUNDRY_LOCAL_MODEL", "phi-4-mini"))
     return OfflineChatClient()
+
+
+def resolve_local_model(base_url: str, alias: str) -> str:
+    """Maps an alias like phi-4-mini to the full model id the local server reports."""
+    import httpx
+
+    try:
+        ids = [m["id"] for m in httpx.get(f"{base_url}/models", timeout=10).json().get("data", [])]
+    except (httpx.HTTPError, ValueError):
+        return alias
+    if alias in ids:
+        return alias
+    key = alias.lower()
+    return next((i for i in ids if i.lower().startswith(key)), next((i for i in ids if key in i.lower()), alias))

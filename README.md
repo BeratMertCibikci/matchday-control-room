@@ -80,7 +80,13 @@ az login                              # DefaultAzureCredential
 
 Or Azure OpenAI: `MCR_LLM=azure_openai`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_KEY`.
 
-Or run fully on-device with **Microsoft Foundry Local** (no cloud account; install it with `brew install microsoft/foundrylocal/foundrylocal` on macOS or `winget install Microsoft.FoundryLocal` on Windows): `MCR_LLM=foundry_local`, optional `FOUNDRY_LOCAL_MODEL` (default `phi-4-mini`). The first run downloads the model.
+Or run fully on-device with **Microsoft Foundry Local** (no cloud account; install it with `brew install microsoft/foundrylocal/foundrylocal` on macOS or `winget install Microsoft.FoundryLocal` on Windows): `MCR_LLM=foundry_local`, optional `FOUNDRY_LOCAL_MODEL` (default `phi-4-mini`). The first run downloads the model. If the SDK cannot start the service (newer CLIs renamed `foundry service` to `foundry server`), start it yourself and point the app at it:
+
+```bash
+foundry server start --port 39839 --idle-timeout 0
+foundry model load phi-4-mini
+export FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:39839
+```
 
 Every validated model answer is cached in `backend/.cache/` (matches are seeded, so replays are instant; the trace shows `cached`), and `MCR_LLM_RPM` rate-limits calls for hosted tiers. To fill the cache before a demo:
 
